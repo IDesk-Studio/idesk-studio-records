@@ -10,7 +10,7 @@ Param(
     [ValidateSet('x86', 'x64')]
     [String]$BuildArch = ('x86', 'x64')[[System.Environment]::Is64BitOperatingSystem],
     [ValidateSet("Release", "RelWithDebInfo", "MinSizeRel", "Debug")]
-    [String]$BuildConfiguration = "RelWithDebInfo"
+    [String]$BuildConfiguration = "MinSizeRel"
 )
 
 ##############################################################################
