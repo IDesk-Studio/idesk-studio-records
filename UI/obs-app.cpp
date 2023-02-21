@@ -1242,6 +1242,10 @@ bool OBSApp::SetTheme(std::string name, std::string path)
 		themeDarkMode = !(color.redF() < 0.5);
 	}
 
+#ifdef __APPLE__
+	SetMacOSDarkMode(themeDarkMode);
+#endif
+
 	emit StyleChanged();
 	return true;
 }
@@ -1249,7 +1253,7 @@ bool OBSApp::SetTheme(std::string name, std::string path)
 bool OBSApp::InitTheme()
 {
 	defaultPalette = palette();
-	setStyle(new OBSIgnoreWheelProxyStyle());
+	setStyle(new OBSProxyStyle());
 
 	const char *themeName =
 		config_get_string(globalConfig, "General", "CurrentTheme3");
@@ -2302,14 +2306,25 @@ static int run_program(fstream &logFile, int argc, char *argv[])
 
 	setenv("QT_STYLE_OVERRIDE", "Fusion", false);
 
+#if OBS_QT_VERSION == 6
+	/* NOTE: Users blindly set this, but this theme is incompatble with Qt6 and
+	 * crashes loading saved geometry. Just turn off this theme and let users complain OBS
+	 * looks ugly instead of crashing. */
+	const char *platform_theme = getenv("QT_QPA_PLATFORMTHEME");
+	if (platform_theme && strcmp(platform_theme, "qt5ct") == 0)
+		unsetenv("QT_QPA_PLATFORMTHEME");
+#endif
+
 #if defined(ENABLE_WAYLAND) && defined(USE_XDG)
 	/* NOTE: Qt doesn't use the Wayland platform on GNOME, so we have to
 	 * force it using the QT_QPA_PLATFORM env var. It's still possible to
 	 * use other QPA platforms using this env var, or the -platform command
-	 * line option. */
+	 * line option. Remove after Qt 6.3 is everywhere. */
 
+	const char *desktop = getenv("XDG_CURRENT_DESKTOP");
 	const char *session_type = getenv("XDG_SESSION_TYPE");
-	if (session_type && strcmp(session_type, "wayland") == 0)
+	if (session_type && desktop && strcmp(desktop, "GNOME") == 0 &&
+	    strcmp(session_type, "wayland") == 0)
 		setenv("QT_QPA_PLATFORM", "wayland", false);
 #endif
 #endif
