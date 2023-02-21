@@ -6,7 +6,7 @@ Param(
     [ValidateSet('x86', 'x64')]
     [String]$BuildArch = $(if (Test-Path variable:BuildArch) { "${BuildArch}" } else { ('x86', 'x64')[[System.Environment]::Is64BitOperatingSystem] }),
     [ValidateSet("Release", "RelWithDebInfo", "MinSizeRel", "Debug")]
-    [String]$BuildConfiguration = $(if (Test-Path variable:BuildConfiguration) { "${BuildConfiguration}" } else { "RelWithDebInfo" })
+    [String]$BuildConfiguration = $(if (Test-Path variable:BuildConfiguration) { "${BuildConfiguration}" } else { "MinSizeRel" })
 )
 
 ##############################################################################
@@ -64,17 +64,16 @@ function Configure-OBS {
     $GeneratorPlatform = "$(if (${BuildArch} -eq "x64") { "x64" } else { "Win32" })"
 
     if ( $PSVersionTable.PSVersion -ge '7.3.0' ) {
-        $CmakeCommand = @(
+        $CmakeCommand = [System.Collections.ArrayList]@(
             "-G", ${CmakeGenerator}
             "-DCMAKE_GENERATOR_PLATFORM=${GeneratorPlatform}",
             "-DCMAKE_SYSTEM_VERSION=${CmakeSystemVersion}",
             "-DCMAKE_PREFIX_PATH:PATH=${CmakePrefixPath}",
             "-DCEF_ROOT_DIR:PATH=${CefDirectory}",
-            "-DENABLE_BROWSER=ON",
+            "-DENABLE_BROWSER=OFF",
             "-DVLC_PATH:PATH=${CheckoutDir}/../obs-build-dependencies/vlc-${WindowsVlcVersion}",
             "-DENABLE_VLC=ON",
             "-DCMAKE_INSTALL_PREFIX=${BuildDirectoryActual}/install",
-            "-DVIRTUALCAM_GUID=${Env:VIRTUALCAM-GUID}",
             "-DTWITCH_CLIENTID=${Env:TWITCH_CLIENTID}",
             "-DTWITCH_HASH=${Env:TWITCH_HASH}",
             "-DRESTREAM_CLIENTID=${Env:RESTREAM_CLIENTID}",
@@ -85,21 +84,22 @@ function Configure-OBS {
             "-DYOUTUBE_SECRET_HASH=${Env:YOUTUBE_SECRET_HASH}",
             "-DCOPIED_DEPENDENCIES=OFF",
             "-DCOPY_DEPENDENCIES=ON",
+            "-DOBS_VERSION_OVERRIDE=4.1.0"
             "-DBUILD_FOR_DISTRIBUTION=$(if (Test-Path Env:BUILD_FOR_DISTRIBUTION) { "ON" } else { "OFF" })",
             "$(if (Test-Path Env:CI) { "-DOBS_BUILD_NUMBER=${Env:GITHUB_RUN_ID}" })",
             "$(if (Test-Path Variable:$Quiet) { "-Wno-deprecated -Wno-dev --log-level=ERROR" })"
         )
     } else {
-        $CmakeCommand = @(
+        $CmakeCommand = [System.Collections.ArrayList]@(
             "-G", ${CmakeGenerator}
             "-DCMAKE_GENERATOR_PLATFORM=`"${GeneratorPlatform}`"",
             "-DCMAKE_SYSTEM_VERSION=`"${CmakeSystemVersion}`"",
             "-DCMAKE_PREFIX_PATH:PATH=`"${CmakePrefixPath}`"",
             "-DCEF_ROOT_DIR:PATH=`"${CefDirectory}`"",
-            "-DENABLE_BROWSER=ON",
+            "-DENABLE_BROWSER=OFF",
             "-DVLC_PATH:PATH=`"${CheckoutDir}/../obs-build-dependencies/vlc-${WindowsVlcVersion}`"",
             "-DENABLE_VLC=ON",
-            "-DCMAKE_INSTALL_PREFIX=`"${BuildDirectoryActual}/install`"",
+            # "-DCMAKE_INSTALL_PREFIX=`"${BuildDirectoryActual}/install`"",
             "-DVIRTUALCAM_GUID=`"${Env:VIRTUALCAM-GUID}`"",
             "-DTWITCH_CLIENTID=`"${Env:TWITCH_CLIENTID}`"",
             "-DTWITCH_HASH=`"${Env:TWITCH_HASH}`"",
@@ -116,6 +116,8 @@ function Configure-OBS {
             "$(if (Test-Path Variable:$Quiet) { "-Wno-deprecated -Wno-dev --log-level=ERROR" })"
         )
     }
+
+    $CmakeCommand = $CmakeCommand + @("-DVIRTUALCAM_GUID=A3FCE0F5-3493-419F-958A-ABA1250EC20B", "-DOBS_VERSION_OVERRIDE=4.1.0", "-DENABLE_BROWSER=OFF")
 
     Invoke-External cmake -S . -B  "${BuildDirectoryActual}" @CmakeCommand
 
