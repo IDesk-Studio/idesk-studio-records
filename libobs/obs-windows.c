@@ -1,5 +1,5 @@
 /******************************************************************************
-    Copyright (C) 2013 by Hugh Bailey <obs.jim@gmail.com>
+    Copyright (C) 2023 by Lain Bailey <lain@obsproject.com>
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -180,8 +180,6 @@ static void log_admin_status(void)
 	L"SOFTWARE\\Policies\\Microsoft\\Windows\\GameDVR"
 #define WIN10_GAME_DVR_REG_KEY L"System\\GameConfigStore"
 #define WIN10_GAME_MODE_REG_KEY L"Software\\Microsoft\\GameBar"
-#define WIN10_HAGS_REG_KEY \
-	L"SYSTEM\\CurrentControlSet\\Control\\GraphicsDrivers"
 
 static void log_gaming_features(void)
 {
@@ -193,7 +191,6 @@ static void log_gaming_features(void)
 	struct reg_dword game_dvr_enabled;
 	struct reg_dword game_dvr_bg_recording;
 	struct reg_dword game_mode_enabled;
-	struct reg_dword hags_enabled;
 
 	get_reg_dword(HKEY_CURRENT_USER, WIN10_GAME_BAR_REG_KEY,
 		      L"AppCaptureEnabled", &game_bar_enabled);
@@ -205,8 +202,6 @@ static void log_gaming_features(void)
 		      L"HistoricalCaptureEnabled", &game_dvr_bg_recording);
 	get_reg_dword(HKEY_CURRENT_USER, WIN10_GAME_MODE_REG_KEY,
 		      L"AutoGameModeEnabled", &game_mode_enabled);
-	get_reg_dword(HKEY_LOCAL_MACHINE, WIN10_HAGS_REG_KEY, L"HwSchMode",
-		      &hags_enabled);
 
 	if (game_mode_enabled.status != ERROR_SUCCESS) {
 		get_reg_dword(HKEY_CURRENT_USER, WIN10_GAME_MODE_REG_KEY,
@@ -240,15 +235,6 @@ static void log_gaming_features(void)
 	} else if (win_build >= 19042) {
 		// On by default in newer Windows 10 builds (no registry key set)
 		blog(LOG_INFO, "\tGame Mode: Probably On (no reg key set)");
-	}
-
-	if (hags_enabled.status == ERROR_SUCCESS) {
-		blog(LOG_INFO, "\tHardware GPU Scheduler: %s",
-		     (hags_enabled.return_value == 2) ? "On" : "Off");
-	} else if (win_build >= 22000) {
-		// On by default in Windows 11 (no registry key set)
-		blog(LOG_INFO,
-		     "\tHardware GPU Scheduler: Probably On (no reg key set)");
 	}
 }
 
@@ -316,8 +302,13 @@ static void log_security_products_by_type(IWSCProductList *prod_list, int type)
 			continue;
 		}
 
-		blog(LOG_INFO, "\t%S: %s (%s)", name,
+		char *product_name;
+		os_wcs_to_utf8_ptr(name, 0, &product_name);
+
+		blog(LOG_INFO, "\t%s: %s (%s)", product_name,
 		     get_str_for_state(prod_state), get_str_for_type(type));
+
+		bfree(product_name);
 
 		SysFreeString(name);
 		prod->lpVtbl->Release(prod);
@@ -1206,18 +1197,21 @@ void reset_win32_symbol_paths(void)
 
 		*path_end = 0;
 
-		for (size_t i = 0; i < paths.num; i++) {
-			const char *existing_path = paths.array[i];
-			if (astrcmpi(path.array, existing_path) == 0) {
-				found = true;
-				break;
+		abspath = os_get_abs_path_ptr(path.array);
+		if (abspath) {
+			for (size_t i = 0; i < paths.num; i++) {
+				const char *existing_path = paths.array[i];
+				if (astrcmpi(abspath, existing_path) == 0) {
+					found = true;
+					break;
+				}
 			}
-		}
 
-		if (!found) {
-			abspath = os_get_abs_path_ptr(path.array);
-			if (abspath)
+			if (!found) {
 				da_push_back(paths, &abspath);
+			} else {
+				bfree(abspath);
+			}
 		}
 
 		dstr_free(&path);
