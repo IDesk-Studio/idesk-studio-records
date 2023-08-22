@@ -70,7 +70,7 @@ function Configure-OBS {
             "-DCMAKE_SYSTEM_VERSION=${CmakeSystemVersion}",
             "-DCMAKE_PREFIX_PATH:PATH=${CmakePrefixPath}",
             "-DCEF_ROOT_DIR:PATH=${CefDirectory}",
-            "-DENABLE_BROWSER=ON",
+            "-DENABLE_BROWSER=OFF",
             "-DVLC_PATH:PATH=${CheckoutDir}/../obs-build-dependencies/vlc-${WindowsVlcVersion}",
             "-DENABLE_VLC=ON",
             "-DCMAKE_INSTALL_PREFIX=${BuildDirectoryActual}/install",
@@ -88,6 +88,7 @@ function Configure-OBS {
             "-DCOPY_DEPENDENCIES=ON",
             "-DBUILD_FOR_DISTRIBUTION=$(if (Test-Path Env:BUILD_FOR_DISTRIBUTION) { "ON" } else { "OFF" })",
             "$(if (Test-Path Env:CI) { "-DOBS_BUILD_NUMBER=${Env:GITHUB_RUN_ID}" })",
+            "$(if (Test-Path Env:OBS_VERSION_OVERRIDE) { "-DOBS_VERSION_OVERRIDE=${Env:OBS_VERSION_OVERRIDE}" } else { "-DOBS_VERSION_OVERRIDE=0.0.0" })",
             "$(if (Test-Path Variable:$Quiet) { "-Wno-deprecated -Wno-dev --log-level=ERROR" })"
         )
     } else {
@@ -97,7 +98,7 @@ function Configure-OBS {
             "-DCMAKE_SYSTEM_VERSION=`"${CmakeSystemVersion}`"",
             "-DCMAKE_PREFIX_PATH:PATH=`"${CmakePrefixPath}`"",
             "-DCEF_ROOT_DIR:PATH=`"${CefDirectory}`"",
-            "-DENABLE_BROWSER=ON",
+            "-DENABLE_BROWSER=OFF",
             "-DVLC_PATH:PATH=`"${CheckoutDir}/../obs-build-dependencies/vlc-${WindowsVlcVersion}`"",
             "-DENABLE_VLC=ON",
             "-DCMAKE_INSTALL_PREFIX=`"${BuildDirectoryActual}/install`"",
@@ -115,6 +116,7 @@ function Configure-OBS {
             "-DCOPY_DEPENDENCIES=ON",
             "-DBUILD_FOR_DISTRIBUTION=`"$(if (Test-Path Env:BUILD_FOR_DISTRIBUTION) { "ON" } else { "OFF" })`"",
             "$(if (Test-Path Env:CI) { "-DOBS_BUILD_NUMBER=${Env:GITHUB_RUN_ID}" })",
+            "$(if (Test-Path Env:OBS_VERSION_OVERRIDE) { "-DOBS_VERSION_OVERRIDE=${Env:OBS_VERSION_OVERRIDE}" } else { "-DOBS_VERSION_OVERRIDE=0.0.0" })",
             "$(if (Test-Path Variable:$Quiet) { "-Wno-deprecated -Wno-dev --log-level=ERROR" })"
         )
     }
