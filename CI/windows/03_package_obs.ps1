@@ -73,7 +73,7 @@ function Package-OBS {
         $CompressVars = @{
             Path = "${CheckoutDir}/build64/install/bin", "${CheckoutDir}/build64/install/data", "${CheckoutDir}/build64/install/obs-plugins"
             CompressionLevel = "Optimal"
-            DestinationPath = "${FileName}-x64.zip"
+            DestinationPath = "${FileName}.zip"
         }
 
         Write-Step "Creating zip archive..."
@@ -125,7 +125,7 @@ function Package-OBS-Standalone {
         $VersionString = "${GitTag}-${GitHash}"
     }
 
-    $FileName = "obs-studio-${VersionString}-windows"
+    $FileName = "records"
 
     Package-OBS
 }

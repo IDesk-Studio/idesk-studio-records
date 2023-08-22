@@ -344,12 +344,12 @@ bool OBSBasic::CreateProfile(const std::string &newName, bool create_new,
 
 	// Run auto configuration setup wizard when a new profile is made to assist
 	// setting up blank settings
-	if (create_new && showWizardChecked) {
-		AutoConfig wizard(this);
-		wizard.setModal(true);
-		wizard.show();
-		wizard.exec();
-	}
+	//if (create_new && showWizardChecked) {
+	//	AutoConfig wizard(this);
+	//	wizard.setModal(true);
+	//	wizard.show();
+	//	wizard.exec();
+	//}
 
 	if (api && !rename) {
 		api->on_event(OBS_FRONTEND_EVENT_PROFILE_LIST_CHANGED);
