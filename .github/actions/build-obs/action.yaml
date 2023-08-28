@@ -7,7 +7,7 @@ inputs:
   config:
     description: Build configuration
     required: false
-    default: RelWithDebInfo
+    default: MinSizeRel
   codesign:
     description: Enable codesigning (macOS only)
     required: false
