@@ -1,5 +1,5 @@
 set(OBS_COMPANY_NAME "OBS Project")
-set(OBS_PRODUCT_NAME "OBS Studio")
+set(OBS_PRODUCT_NAME "iDesk Records")
 set(OBS_WEBSITE "https://www.obsproject.com")
 set(OBS_COMMENTS "Free and open source software for video recording and live streaming")
 set(OBS_LEGAL_COPYRIGHT "(C) Lain Bailey")
@@ -15,7 +15,7 @@ if(NOT DEFINED OBS_VERSION_OVERRIDE)
      AND NOT DEFINED BETA
      AND EXISTS "${CMAKE_SOURCE_DIR}/.git")
     execute_process(
-      COMMAND git describe --always --tags --dirty=-modified
+      COMMAND git describe --always --tags --dirty=
       OUTPUT_VARIABLE _OBS_VERSION
       WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
       RESULT_VARIABLE _OBS_VERSION_RESULT
