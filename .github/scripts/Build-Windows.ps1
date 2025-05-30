@@ -13,10 +13,6 @@ if ( $DebugPreference -eq 'Continue' ) {
     $InformationPreference = 'Continue'
 }
 
-if ( $env:CI -eq $null ) {
-    throw "Build-Windows.ps1 requires CI environment"
-}
-
 if ( ! ( [System.Environment]::Is64BitOperatingSystem ) ) {
     throw "obs-studio requires a 64-bit system to build and run."
 }
@@ -64,7 +60,8 @@ function Build {
 
     $CmakeBuildArgs += @(
         '--preset', "windows-${Target}"
-        '--config', $Configuration
+        '--config', $Configuration,
+        '-DOBS_VERSION_OVERRIDE', '31.0.3',
         '--parallel'
         '--', '/consoleLoggerParameters:Summary', '/noLogo'
     )
