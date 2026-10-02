@@ -1,0 +1,418 @@
+diff --git a/CMakePresets.json b/CMakePresets.json
+index 36820b19f..fa2bebd40 100644
+--- a/CMakePresets.json
++++ b/CMakePresets.json
+@@ -102,9 +102,10 @@
+       "binaryDir": "${sourceDir}/build_x64",
+       "generator": "Visual Studio 17 2022",
+       "cacheVariables": {
++        "OBS_VERSION_OVERRIDE": "31.0.3",
+         "GPU_PRIORITY_VAL": {"type": "STRING", "value": "$penv{GPU_PRIORITY_VAL}"},
+         "VIRTUALCAM_GUID": {"type": "STRING", "value": "A3FCE0F5-3493-419F-958A-ABA1250EC20B"},
+-        "ENABLE_BROWSER": true
++        "ENABLE_BROWSER": false
+       }
+     },
+     {
+diff --git a/UI/log-viewer.cpp b/UI/log-viewer.cpp
+index 9ef67a69c..487cbe461 100644
+--- a/UI/log-viewer.cpp
++++ b/UI/log-viewer.cpp
+@@ -50,7 +50,7 @@ void OBSLogViewer::InitLog()
+ 	char logDir[512];
+ 	std::string path;
+ 
+-	if (GetAppConfigPath(logDir, sizeof(logDir), "obs-studio/logs")) {
++	if (GetAppConfigPath(logDir, sizeof(logDir), "IDeskStudio/obs/logs")) {
+ 		path += logDir;
+ 		path += "/";
+ 		path += App()->GetCurrentLog();
+@@ -117,7 +117,7 @@ void OBSLogViewer::AddLine(int type, const QString &str)
+ void OBSLogViewer::on_openButton_clicked()
+ {
+ 	char logDir[512];
+-	if (GetAppConfigPath(logDir, sizeof(logDir), "obs-studio/logs") <= 0)
++	if (GetAppConfigPath(logDir, sizeof(logDir), "IDeskStudio/obs/logs") <= 0)
+ 		return;
+ 
+ 	const char *log = App()->GetCurrentLog();
+diff --git a/UI/obs-app.cpp b/UI/obs-app.cpp
+index ebd38cb56..72bc07dca 100644
+--- a/UI/obs-app.cpp
++++ b/UI/obs-app.cpp
+@@ -430,7 +430,7 @@ bool OBSApp::InitGlobalConfigDefaults()
+ 	config_set_default_uint(appConfig, "General", "MaxLogs", 10);
+ 	config_set_default_int(appConfig, "General", "InfoIncrement", -1);
+ 	config_set_default_string(appConfig, "General", "ProcessPriority", "Normal");
+-	config_set_default_bool(appConfig, "General", "EnableAutoUpdates", true);
++	config_set_default_bool(appConfig, "General", "EnableAutoUpdates", false);
+ 
+ #if _WIN32
+ 	config_set_default_string(appConfig, "Video", "Renderer", "Direct3D 11");
+@@ -522,36 +522,36 @@ static bool MakeUserDirs()
+ {
+ 	char path[512];
+ 
+-	if (GetAppConfigPath(path, sizeof(path), "obs-studio/basic") <= 0)
++	if (GetAppConfigPath(path, sizeof(path), "IDeskStudio/obs/basic") <= 0)
+ 		return false;
+ 	if (!do_mkdir(path))
+ 		return false;
+ 
+-	if (GetAppConfigPath(path, sizeof(path), "obs-studio/logs") <= 0)
++	if (GetAppConfigPath(path, sizeof(path), "IDeskStudio/obs/logs") <= 0)
+ 		return false;
+ 	if (!do_mkdir(path))
+ 		return false;
+ 
+-	if (GetAppConfigPath(path, sizeof(path), "obs-studio/profiler_data") <= 0)
++	if (GetAppConfigPath(path, sizeof(path), "IDeskStudio/obs/profiler_data") <= 0)
+ 		return false;
+ 	if (!do_mkdir(path))
+ 		return false;
+ 
+ #ifdef _WIN32
+-	if (GetAppConfigPath(path, sizeof(path), "obs-studio/crashes") <= 0)
++	if (GetAppConfigPath(path, sizeof(path), "IDeskStudio/obs/crashes") <= 0)
+ 		return false;
+ 	if (!do_mkdir(path))
+ 		return false;
+ #endif
+ 
+ #ifdef WHATSNEW_ENABLED
+-	if (GetAppConfigPath(path, sizeof(path), "obs-studio/updates") <= 0)
++	if (GetAppConfigPath(path, sizeof(path), "IDeskStudio/obs/updates") <= 0)
+ 		return false;
+ 	if (!do_mkdir(path))
+ 		return false;
+ #endif
+ 
+-	if (GetAppConfigPath(path, sizeof(path), "obs-studio/plugin_config") <= 0)
++	if (GetAppConfigPath(path, sizeof(path), "IDeskStudio/obs/plugin_config") <= 0)
+ 		return false;
+ 	if (!do_mkdir(path))
+ 		return false;
+@@ -559,8 +559,8 @@ static bool MakeUserDirs()
+ 	return true;
+ }
+ 
+-constexpr std::string_view OBSProfileSubDirectory = "obs-studio/basic/profiles";
+-constexpr std::string_view OBSScenesSubDirectory = "obs-studio/basic/scenes";
++constexpr std::string_view OBSProfileSubDirectory = "IDeskStudio/obs/basic/profiles";
++constexpr std::string_view OBSScenesSubDirectory = "IDeskStudio/obs/basic/scenes";
+ 
+ static bool MakeUserProfileDirs()
+ {
+@@ -628,7 +628,7 @@ bool OBSApp::InitGlobalConfig()
+ {
+ 	char path[512];
+ 
+-	int len = GetAppConfigPath(path, sizeof(path), "obs-studio/global.ini");
++	int len = GetAppConfigPath(path, sizeof(path), "IDeskStudio/obs/global.ini");
+ 	if (len <= 0) {
+ 		return false;
+ 	}
+@@ -677,7 +677,7 @@ bool OBSApp::InitGlobalConfig()
+ 
+ bool OBSApp::InitUserConfig(std::filesystem::path &userConfigLocation, uint32_t lastVersion)
+ {
+-	const std::string userConfigFile = userConfigLocation.u8string() + "/obs-studio/user.ini";
++	const std::string userConfigFile = userConfigLocation.u8string() + "/IDeskStudio/obs/user.ini";
+ 
+ 	int errorCode = userConfig.Open(userConfigFile.c_str(), CONFIG_OPEN_ALWAYS);
+ 
+@@ -737,8 +737,8 @@ void OBSApp::MigrateLegacySettings(const uint32_t lastVersion)
+ 	}
+ }
+ 
+-static constexpr string_view OBSGlobalIniPath = "/obs-studio/global.ini";
+-static constexpr string_view OBSUserIniPath = "/obs-studio/user.ini";
++static constexpr string_view OBSGlobalIniPath = "/IDeskStudio/obs/global.ini";
++static constexpr string_view OBSUserIniPath = "/IDeskStudio/obs/user.ini";
+ 
+ bool OBSApp::MigrateGlobalSettings()
+ {
+@@ -890,7 +890,7 @@ bool LoadBranchesFile(vector<UpdateBranch> &out)
+ 	string error;
+ 	string branchesText;
+ 
+-	BPtr<char> branchesFilePath = GetAppConfigPathPtr("obs-studio/updates/branches.json");
++	BPtr<char> branchesFilePath = GetAppConfigPathPtr("IDeskStudio/obs/updates/branches.json");
+ 
+ 	QFile branchesFile(branchesFilePath.Get());
+ 	if (!branchesFile.open(QIODevice::ReadOnly)) {
+@@ -1017,7 +1017,7 @@ static void move_basic_to_profiles(void)
+ {
+ 	char path[512];
+ 
+-	if (GetAppConfigPath(path, 512, "obs-studio/basic") <= 0) {
++	if (GetAppConfigPath(path, 512, "IDeskStudio/obs/basic") <= 0) {
+ 		return;
+ 	}
+ 
+@@ -1028,7 +1028,7 @@ static void move_basic_to_profiles(void)
+ 	}
+ 
+ 	const std::filesystem::path profilesPath =
+-		App()->userProfilesLocation / std::filesystem::u8path("obs-studio/basic/profiles");
++		App()->userProfilesLocation / std::filesystem::u8path("IDeskStudio/obs/basic/profiles");
+ 
+ 	if (std::filesystem::exists(profilesPath)) {
+ 		return;
+@@ -1081,7 +1081,7 @@ static void move_basic_to_scene_collections(void)
+ {
+ 	char path[512];
+ 
+-	if (GetAppConfigPath(path, 512, "obs-studio/basic") <= 0) {
++	if (GetAppConfigPath(path, 512, "IDeskStudio/obs/basic") <= 0) {
+ 		return;
+ 	}
+ 
+@@ -1092,7 +1092,7 @@ static void move_basic_to_scene_collections(void)
+ 	}
+ 
+ 	const std::filesystem::path sceneCollectionPath =
+-		App()->userScenesLocation / std::filesystem::u8path("obs-studio/basic/scenes");
++		App()->userScenesLocation / std::filesystem::u8path("IDeskStudio/obs/basic/scenes");
+ 
+ 	if (std::filesystem::exists(sceneCollectionPath)) {
+ 		return;
+@@ -1179,7 +1179,7 @@ static bool StartupOBS(const char *locale, profiler_name_store_t *store)
+ {
+ 	char path[512];
+ 
+-	if (GetAppConfigPath(path, sizeof(path), "obs-studio/plugin_config") <= 0)
++	if (GetAppConfigPath(path, sizeof(path), "IDeskStudio/obs/plugin_config") <= 0)
+ 		return false;
+ 
+ 	return obs_startup(locale, path, store);
+@@ -1790,13 +1790,13 @@ static void create_log_file(fstream &logFile)
+ {
+ 	stringstream dst;
+ 
+-	get_last_log(false, "obs-studio/logs", lastLogFile);
++	get_last_log(false, "IDeskStudio/obs/logs", lastLogFile);
+ #ifdef _WIN32
+-	get_last_log(true, "obs-studio/crashes", lastCrashLogFile);
++	get_last_log(true, "IDeskStudio/obs/crashes", lastCrashLogFile);
+ #endif
+ 
+ 	currentLogFile = GenerateTimeDateFilename("txt");
+-	dst << "obs-studio/logs/" << currentLogFile.c_str();
++	dst << "IDeskStudio/obs/logs/" << currentLogFile.c_str();
+ 
+ 	BPtr<char> path(GetAppConfigPathPtr(dst.str().c_str()));
+ 
+@@ -1809,7 +1809,7 @@ static void create_log_file(fstream &logFile)
+ #endif
+ 
+ 	if (logFile.is_open()) {
+-		delete_oldest_file(false, "obs-studio/logs");
++		delete_oldest_file(false, "IDeskStudio/obs/logs");
+ 		base_set_log_handler(do_log, &logFile);
+ 	} else {
+ 		blog(LOG_ERROR, "Failed to open log file");
+@@ -1849,7 +1849,7 @@ static void SaveProfilerData(const ProfilerSnapshot &snap)
+ 
+ #define LITERAL_SIZE(x) x, (sizeof(x) - 1)
+ 	ostringstream dst;
+-	dst.write(LITERAL_SIZE("obs-studio/profiler_data/"));
++	dst.write(LITERAL_SIZE("IDeskStudio/obs/profiler_data/"));
+ 	dst.write(currentLogFile.c_str(), pos);
+ 	dst.write(LITERAL_SIZE(".csv.gz"));
+ #undef LITERAL_SIZE
+@@ -1937,7 +1937,7 @@ static int run_program(fstream &logFile, int argc, char *argv[])
+ 		bool created_log = false;
+ 
+ 		program.AppInit();
+-		delete_oldest_file(false, "obs-studio/profiler_data");
++		delete_oldest_file(false, "IDeskStudio/obs/profiler_data");
+ 
+ 		OBSTranslator translator;
+ 		program.installTranslator(&translator);
+@@ -2134,7 +2134,7 @@ static void main_crash_handler(const char *format, va_list args, void * /* param
+ 	vsnprintf(text, MAX_CRASH_REPORT_SIZE, format, args);
+ 	text[MAX_CRASH_REPORT_SIZE - 1] = 0;
+ 
+-	string crashFilePath = "obs-studio/crashes";
++	string crashFilePath = "IDeskStudio/obs/crashes";
+ 
+ 	delete_oldest_file(true, crashFilePath.c_str());
+ 
+diff --git a/UI/ui-config.h.in b/UI/ui-config.h.in
+index bbe006347..47c770800 100644
+--- a/UI/ui-config.h.in
++++ b/UI/ui-config.h.in
+@@ -13,4 +13,4 @@
+ #define YOUTUBE_CLIENTID_HASH 0x@YOUTUBE_CLIENTID_HASH@
+ #define YOUTUBE_SECRET_HASH   0x@YOUTUBE_SECRET_HASH@
+ 
+-#define DEFAULT_THEME "com.obsproject.Yami.Original"
++#define DEFAULT_THEME "com.obsproject.Yami.Light"
+diff --git a/UI/update/mac-update.cpp b/UI/update/mac-update.cpp
+index 33fca9430..fac356d9b 100644
+--- a/UI/update/mac-update.cpp
++++ b/UI/update/mac-update.cpp
+@@ -60,7 +60,7 @@ try {
+ 	/* ----------------------------------- *
+ 	 * get branches from server            */
+ 
+-	if (FetchAndVerifyFile("branches", "obs-studio/updates/branches.json", MAC_BRANCHES_URL, &text))
++	if (FetchAndVerifyFile("branches", "IDeskStudio/obs/updates/branches.json", MAC_BRANCHES_URL, &text))
+ 		App()->SetBranchData(text);
+ 
+ 	/* ----------------------------------- *
+diff --git a/UI/update/shared-update.cpp b/UI/update/shared-update.cpp
+index 0aedd8d95..e2be4e192 100644
+--- a/UI/update/shared-update.cpp
++++ b/UI/update/shared-update.cpp
+@@ -277,7 +277,7 @@ void WhatsNewInfoThread::run()
+ try {
+ 	std::string text;
+ 
+-	if (FetchAndVerifyFile("whatsnew", "obs-studio/updates/whatsnew.json", WHATSNEW_URL, &text)) {
++	if (FetchAndVerifyFile("whatsnew", "IDeskStudio/obs/updates/whatsnew.json", WHATSNEW_URL, &text)) {
+ 		emit Result(QString::fromStdString(text));
+ 	}
+ } catch (std::string &text) {
+diff --git a/UI/window-basic-main-profiles.cpp b/UI/window-basic-main-profiles.cpp
+index 9b346e8d4..412f536d0 100644
+--- a/UI/window-basic-main-profiles.cpp
++++ b/UI/window-basic-main-profiles.cpp
+@@ -33,7 +33,7 @@
+ 
+ // MARK: Constant Expressions
+ 
+-constexpr std::string_view OBSProfilePath = "/obs-studio/basic/profiles/";
++constexpr std::string_view OBSProfilePath = "/IDeskStudio/obs/basic/profiles/";
+ constexpr std::string_view OBSProfileSettingsFile = "basic.ini";
+ 
+ // MARK: Forward Declarations
+diff --git a/UI/window-basic-main-scene-collections.cpp b/UI/window-basic-main-scene-collections.cpp
+index 3e1f9ecef..c255beeab 100644
+--- a/UI/window-basic-main-scene-collections.cpp
++++ b/UI/window-basic-main-scene-collections.cpp
+@@ -32,7 +32,7 @@
+ 
+ // MARK: Constant Expressions
+ 
+-constexpr std::string_view OBSSceneCollectionPath = "/obs-studio/basic/scenes/";
++constexpr std::string_view OBSSceneCollectionPath = "/IDeskStudio/obs/basic/scenes/";
+ 
+ // MARK: - Anonymous Namespace
+ namespace {
+diff --git a/UI/window-basic-main.cpp b/UI/window-basic-main.cpp
+index 4872f5fd0..f0ccf411a 100644
+--- a/UI/window-basic-main.cpp
++++ b/UI/window-basic-main.cpp
+@@ -6148,7 +6148,7 @@ void OBSBasic::UploadLog(const char *subdir, const char *file, const bool crash)
+ void OBSBasic::on_actionShowLogs_triggered()
+ {
+ 	char logDir[512];
+-	if (GetAppConfigPath(logDir, sizeof(logDir), "obs-studio/logs") <= 0)
++	if (GetAppConfigPath(logDir, sizeof(logDir), "IDeskStudio/obs/logs") <= 0)
+ 		return;
+ 
+ 	QUrl url = QUrl::fromLocalFile(QT_UTF8(logDir));
+@@ -6157,12 +6157,12 @@ void OBSBasic::on_actionShowLogs_triggered()
+ 
+ void OBSBasic::on_actionUploadCurrentLog_triggered()
+ {
+-	UploadLog("obs-studio/logs", App()->GetCurrentLog(), false);
++	UploadLog("IDeskStudio/obs/logs", App()->GetCurrentLog(), false);
+ }
+ 
+ void OBSBasic::on_actionUploadLastLog_triggered()
+ {
+-	UploadLog("obs-studio/logs", App()->GetLastLog(), false);
++	UploadLog("IDeskStudio/obs/logs", App()->GetLastLog(), false);
+ }
+ 
+ void OBSBasic::on_actionViewCurrentLog_triggered()
+@@ -6179,7 +6179,7 @@ void OBSBasic::on_actionViewCurrentLog_triggered()
+ void OBSBasic::on_actionShowCrashLogs_triggered()
+ {
+ 	char logDir[512];
+-	if (GetAppConfigPath(logDir, sizeof(logDir), "obs-studio/crashes") <= 0)
++	if (GetAppConfigPath(logDir, sizeof(logDir), "IDeskStudio/obs/crashes") <= 0)
+ 		return;
+ 
+ 	QUrl url = QUrl::fromLocalFile(QT_UTF8(logDir));
+@@ -6188,7 +6188,7 @@ void OBSBasic::on_actionShowCrashLogs_triggered()
+ 
+ void OBSBasic::on_actionUploadLastCrashLog_triggered()
+ {
+-	UploadLog("obs-studio/crashes", App()->GetLastCrashLog(), true);
++	UploadLog("IDeskStudio/obs/crashes", App()->GetLastCrashLog(), true);
+ }
+ 
+ void OBSBasic::on_actionCheckForUpdates_triggered()
+@@ -8679,7 +8679,7 @@ int OBSBasic::GetProfilePath(char *path, size_t size, const char *file) const
+ 	if (!file)
+ 		file = "";
+ 
+-	ret = GetAppConfigPath(profiles_path, 512, "obs-studio/basic/profiles");
++	ret = GetAppConfigPath(profiles_path, 512, "IDeskStudio/obs/basic/profiles");
+ 	if (ret <= 0)
+ 		return ret;
+ 
+diff --git a/UI/window-importer.cpp b/UI/window-importer.cpp
+index 88d4ad2d9..f3e88bf60 100644
+--- a/UI/window-importer.cpp
++++ b/UI/window-importer.cpp
+@@ -500,7 +500,7 @@ bool GetUnusedName(std::string &name)
+ 	return true;
+ }
+ 
+-constexpr std::string_view OBSSceneCollectionPath = "obs-studio/basic/scenes/";
++constexpr std::string_view OBSSceneCollectionPath = "IDeskStudio/obs/basic/scenes/";
+ 
+ void OBSImporter::importCollections()
+ {
+diff --git a/cmake/common/versionconfig.cmake b/cmake/common/versionconfig.cmake
+index 7a1e75312..350e2ad14 100644
+--- a/cmake/common/versionconfig.cmake
++++ b/cmake/common/versionconfig.cmake
+@@ -8,7 +8,7 @@ set(_obs_version_canonical ${_obs_default_version})
+ # Attempt to automatically discover expected OBS version
+ if(NOT DEFINED OBS_VERSION_OVERRIDE AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/.git")
+   execute_process(
+-    COMMAND git describe --always --tags --dirty=-modified
++    COMMAND git describe --always --tags --dirty=
+     OUTPUT_VARIABLE _obs_version
+     ERROR_VARIABLE _git_describe_err
+     WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+diff --git a/plugins/mac-virtualcam/src/dal-plugin/OBSDALStream.mm b/plugins/mac-virtualcam/src/dal-plugin/OBSDALStream.mm
+index 18a55acd7..1a08fcc6c 100644
+--- a/plugins/mac-virtualcam/src/dal-plugin/OBSDALStream.mm
++++ b/plugins/mac-virtualcam/src/dal-plugin/OBSDALStream.mm
+@@ -157,7 +157,7 @@
+         NSURL *homeUrl = [fileManager homeDirectoryForCurrentUser];
+         NSURL *customUrl =
+             [homeUrl URLByAppendingPathComponent:
+-                         @"Library/Application Support/obs-studio/plugin_config/mac-virtualcam/placeholder.png"];
++                         @"Library/Application Support/IDeskStudio/obs/plugin_config/mac-virtualcam/placeholder.png"];
+         NSString *customPlaceHolder = customUrl.path;
+         if ([fileManager isReadableFileAtPath:customPlaceHolder])
+             placeHolderPath = customPlaceHolder;
+Submodule plugins/obs-websocket contains modified content
+diff --git a/plugins/obs-websocket/src/Config.h b/plugins/obs-websocket/src/Config.h
+index f0b52bd..b86d90b 100644
+--- a/plugins/obs-websocket/src/Config.h
++++ b/plugins/obs-websocket/src/Config.h
+@@ -34,12 +34,12 @@ struct Config {
+ 	std::atomic<bool> PasswordOverridden = false;
+ 
+ 	std::atomic<bool> FirstLoad = true;
+-	std::atomic<bool> ServerEnabled = false;
++	std::atomic<bool> ServerEnabled = true;
+ 	std::atomic<uint16_t> ServerPort = 4455;
+ 	std::atomic<bool> Ipv4Only = false;
+ 	std::atomic<bool> DebugEnabled = false;
+-	std::atomic<bool> AlertsEnabled = false;
+-	std::atomic<bool> AuthRequired = true;
++	std::atomic<bool> AlertsEnabled = true;
++	std::atomic<bool> AuthRequired = false;
+ 	std::string ServerPassword;
+ };
+ 
